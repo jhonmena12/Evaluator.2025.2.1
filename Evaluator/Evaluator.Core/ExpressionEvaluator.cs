@@ -1,4 +1,8 @@
-﻿namespace Evaluator.Core
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+
+namespace Evaluator.Core
 {
     public class ExpressionEvaluator
     {
@@ -14,20 +18,24 @@
         {
             List<string> tokens = new();
             int i = 0;
+
             while (i < expr.Length)
             {
                 char ch = expr[i];
 
+                // ignorar espacios
                 if (char.IsWhiteSpace(ch))
                 {
                     i++;
                     continue;
                 }
 
+                // detectar número (entero o decimal)
                 if (char.IsDigit(ch) || ch == '.')
                 {
                     string num = "";
                     int dotCount = 0;
+
                     while (i < expr.Length && (char.IsDigit(expr[i]) || expr[i] == '.'))
                     {
                         if (expr[i] == '.')
@@ -39,10 +47,12 @@
                         num += expr[i];
                         i++;
                     }
+
                     tokens.Add(num);
                     continue;
                 }
 
+                // operadores y paréntesis
                 if ("+-*/^()%".Contains(ch))
                 {
                     tokens.Add(ch.ToString());
@@ -52,6 +62,7 @@
 
                 throw new Exception($"Carácter inválido: {ch}");
             }
+
             return tokens;
         }
 
@@ -63,7 +74,7 @@
 
             foreach (var token in tokens)
             {
-                if (double.TryParse(token, out _))
+                if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
                 {
                     output.Add(token);
                 }
@@ -75,14 +86,21 @@
                 {
                     while (stack.Count > 0 && stack.Peek() != "(")
                         output.Add(stack.Pop());
-                    if (stack.Count == 0 || stack.Peek() != "(")
+
+                    if (stack.Count == 0)
                         throw new Exception("Paréntesis desbalanceados.");
-                    stack.Pop();
+
+                    stack.Pop(); // quitar "("
                 }
                 else if (IsOperator(token))
                 {
-                    while (stack.Count > 0 && Priority(stack.Peek()) >= Priority(token))
+                    while (stack.Count > 0 && IsOperator(stack.Peek()) &&
+                           ((IsLeftAssociative(token) && Priority(stack.Peek()) >= Priority(token)) ||
+                            (!IsLeftAssociative(token) && Priority(stack.Peek()) > Priority(token))))
+                    {
                         output.Add(stack.Pop());
+                    }
+
                     stack.Push(token);
                 }
             }
@@ -98,7 +116,8 @@
             return output;
         }
 
-        private static bool IsOperator(string token) => token is "+" or "-" or "*" or "/" or "^" or "%";
+        private static bool IsOperator(string token) =>
+            token is "+" or "-" or "*" or "/" or "^" or "%";
 
         private static int Priority(string op) => op switch
         {
@@ -108,26 +127,33 @@
             _ => 0
         };
 
-        // -------------------- Postfix evaluation --------------------
+        private static bool IsLeftAssociative(string op) => op != "^"; // ^ es asociativo a la derecha
+
+        // -------------------- Postfix Evaluation --------------------
         private static double Calculate(List<string> postfix)
         {
             var stack = new Stack<double>();
+
             foreach (var token in postfix)
             {
-                if (double.TryParse(token, out double num))
+                if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double num))
                 {
                     stack.Push(num);
                 }
                 else if (IsOperator(token))
                 {
-                    if (stack.Count < 2) throw new Exception("Faltan operandos.");
+                    if (stack.Count < 2)
+                        throw new Exception("Faltan operandos en la expresión.");
+
                     double b = stack.Pop();
                     double a = stack.Pop();
                     stack.Push(Calculate(a, token, b));
                 }
             }
+
             if (stack.Count != 1)
                 throw new Exception("Expresión inválida.");
+
             return stack.Pop();
         }
 
@@ -143,3 +169,4 @@
         };
     }
 }
+
