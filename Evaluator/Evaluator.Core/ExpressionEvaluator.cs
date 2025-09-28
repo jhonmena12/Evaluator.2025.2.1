@@ -13,7 +13,7 @@ namespace Evaluator.Core
             return Calculate(postfix);
         }
 
-        // -------------------- Tokenizer --------------------
+        // -------------------- Tokenizer -------------------
         private static List<string> Tokenize(string expr)
         {
             List<string> tokens = new();
