@@ -23,14 +23,14 @@ namespace Evaluator.Core
             {
                 char ch = expr[i];
 
-                // ignorar espacios
+                
                 if (char.IsWhiteSpace(ch))
                 {
                     i++;
                     continue;
                 }
 
-                // detectar número (entero o decimal)
+                
                 if (char.IsDigit(ch) || ch == '.')
                 {
                     string num = "";
@@ -52,7 +52,7 @@ namespace Evaluator.Core
                     continue;
                 }
 
-                // operadores y paréntesis
+               
                 if ("+-*/^()%".Contains(ch))
                 {
                     tokens.Add(ch.ToString());
@@ -90,7 +90,7 @@ namespace Evaluator.Core
                     if (stack.Count == 0)
                         throw new Exception("Paréntesis desbalanceados.");
 
-                    stack.Pop(); // quitar "("
+                    stack.Pop(); 
                 }
                 else if (IsOperator(token))
                 {
@@ -127,7 +127,7 @@ namespace Evaluator.Core
             _ => 0
         };
 
-        private static bool IsLeftAssociative(string op) => op != "^"; // ^ es asociativo a la derecha
+        private static bool IsLeftAssociative(string op) => op != "^";
 
         // -------------------- Postfix Evaluation --------------------
         private static double Calculate(List<string> postfix)
